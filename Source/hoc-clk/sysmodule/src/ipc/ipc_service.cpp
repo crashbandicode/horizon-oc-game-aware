@@ -37,6 +37,7 @@
 #include "../file/kip.hpp"
 #include "../hos/apm_ext.h"
 #include "../mgr/clock_manager.hpp"
+#include "../mgr/game_aware.hpp"
 #include "ipc_service.hpp"
 #include <ipc_server.h>
 #include <lockable_mutex.h>
@@ -149,6 +150,32 @@ namespace ipcService {
         Result ServiceHandlerFunc(void *arg, const IpcServerRequest *r, u8 *out_data, size_t *out_dataSize) {
             (void)arg;
             switch (r->data.cmdId) {
+                case HocClkIpcCmd_GameAwareGetInfo:
+                    *out_dataSize = sizeof(HocClkGameAwareInfo);
+                    *reinterpret_cast<HocClkGameAwareInfo *>(out_data) = gameAware::GetInfo();
+                    return 0;
+
+                case HocClkIpcCmd_GameAwareArm:
+                    if (r->data.size >= sizeof(HocClkGameAwareArmArgs)) {
+                        *out_dataSize = sizeof(HocClkGameAwareArmResult);
+                        return gameAware::Arm(r->hipc.meta.send_pid, r->hipc.pid,
+                            *reinterpret_cast<const HocClkGameAwareArmArgs *>(r->data.ptr),
+                            *reinterpret_cast<HocClkGameAwareArmResult *>(out_data));
+                    }
+                    break;
+
+                case HocClkIpcCmd_GameAwareSetApply:
+                    if (r->data.size >= sizeof(HocClkGameAwareSetApplyArgs)) {
+                        *out_dataSize = sizeof(HocClkGameAwareState);
+                        return gameAware::SetApply(r->hipc.meta.send_pid, r->hipc.pid,
+                            *reinterpret_cast<const HocClkGameAwareSetApplyArgs *>(r->data.ptr),
+                            *reinterpret_cast<HocClkGameAwareState *>(out_data));
+                    }
+                    break;
+
+                case HocClkIpcCmd_GameAwareDisarm:
+                    return gameAware::Disarm(r->hipc.meta.send_pid, r->hipc.pid);
+
                 case HocClkIpcCmd_GetApiVersion:
                     *out_dataSize = sizeof(u32);
                     return GetApiVersion((u32 *)out_data);

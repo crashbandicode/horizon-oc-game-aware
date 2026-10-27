@@ -55,6 +55,9 @@ namespace clockManager {
 
     HocClkContext GetCurrentContext();
 
+    // Caller holds gContextMutex; one profile-gate snapshot per manager tick.
+    std::uint64_t ProfileTitleId(HocClkModule module);
+
     void SetRunning(bool running);
     bool Running();
 
