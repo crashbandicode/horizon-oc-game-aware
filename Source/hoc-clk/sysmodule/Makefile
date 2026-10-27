@@ -28,7 +28,7 @@ INCLUDES	:=	../common/include src/hos src/soc src/i2c src/util src/pwr src/ipc
 EXEFS_SRC	:=	exefs_src
 LIBNAMES	:=	minIni
 # major minor patch
-TARGET_VERSION	:= 2.6.1
+TARGET_VERSION	:= 2.6.1+ga.1
 KIP_VERSION :=  261
 CUST_REV    :=  7
 
