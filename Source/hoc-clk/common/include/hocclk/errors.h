@@ -35,5 +35,8 @@ typedef enum
     HocClkError_Generic = 0,
     HocClkError_ConfigNotLoaded = 1,
     HocClkError_ConfigSaveFailed = 2,
+    HocClkError_GameAwareNotApplication = 100,
+    HocClkError_GameAwareNotOwner = 101,
+    HocClkError_GameAwareBadArgs = 102,
     // HocClkError_SocThermFail = 3,
 } HocClkError;
