@@ -43,11 +43,18 @@
 #include "../soc/gm20b.hpp"
 #include "../util/lockable_mutex.h"
 #include "clock_manager.hpp"
+#include "game_aware.hpp"
 #include "governor.hpp"
 
 #define HOSPPC_HAS_BOOST (hosversionAtLeast(7, 0, 0))
 
 namespace clockManager {
+
+    namespace { std::uint64_t gProfileTid = 0; }
+
+    std::uint64_t ProfileTitleId(HocClkModule module) {
+        return gameAware::Policy::ProfileTitleId(module == HocClkModule_Display, gProfileTid, gContext.applicationId);
+    }
 
     bool gRunning = false;
     LockableMutex gContextMutex;
@@ -347,7 +354,7 @@ namespace clockManager {
     u32 GetNearestOverrideHz(HocClkModule module) {
         u32 targetHz = gContext.overrideFreqs[module];
         if (!targetHz) {
-            targetHz = config::GetAutoClockHz(gContext.applicationId, module, gContext.profile, false);
+            targetHz = config::GetAutoClockHz(ProfileTitleId(module), module, gContext.profile, false);
             if (!targetHz) {
                 targetHz = config::GetAutoClockHz(HOCCLK_GLOBAL_PROFILE_TID, module, gContext.profile, false);
             }
@@ -500,7 +507,7 @@ namespace clockManager {
                 returnRaw = false;
             targetHz = gContext.overrideFreqs[module];
             if (!targetHz) {
-                targetHz = config::GetAutoClockHz(gContext.applicationId, (HocClkModule)module, gContext.profile, returnRaw);
+                targetHz = config::GetAutoClockHz(ProfileTitleId((HocClkModule)module), (HocClkModule)module, gContext.profile, returnRaw);
                 if (!targetHz)
                     targetHz = config::GetAutoClockHz(HOCCLK_GLOBAL_PROFILE_TID, (HocClkModule)module, gContext.profile, returnRaw);
             }
@@ -604,7 +611,18 @@ namespace clockManager {
             hasChanged = true;
         }
 
-        // restore clocks to stock values on app or profile change
+        // Query PID separately, preserving GetCurrentApplicationId's qlaunch behavior.
+        u64 applicationPid = 0;
+        if (R_FAILED(pmdmntGetApplicationProcessId(&applicationPid)))
+            applicationPid = 0;
+        const auto gate = gameAware::Tick(applicationPid, applicationId);
+        gProfileTid = gate.profileTid;
+        if (gate.changed) {
+            fileUtils::LogLine("[mgr] Title profile gate: %s", gate.suppressed ? "suppressed" : "applied");
+            hasChanged = true;
+        }
+
+        // restore clocks to stock values on app, profile or gate change
         if (hasChanged) {
             board::ResetToStock();
             if (config::GetConfigValue(HocClkConfigValue_DVFSMode) == DVFSMode_Hijack) {

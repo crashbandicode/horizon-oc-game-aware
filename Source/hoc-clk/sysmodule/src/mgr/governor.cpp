@@ -39,7 +39,7 @@ namespace governor {
     void HandleGovernor(uint32_t targetHz) {
         u32 tempTargetHz = clockManager::gContext.overrideFreqs[HocClkModule_Governor];
         if (!tempTargetHz) {
-            tempTargetHz = config::GetAutoClockHz(clockManager::gContext.applicationId, HocClkModule_Governor, clockManager::gContext.profile, true);
+            tempTargetHz = config::GetAutoClockHz(clockManager::ProfileTitleId(HocClkModule_Governor), HocClkModule_Governor, clockManager::gContext.profile, true);
             if (!tempTargetHz)
                 tempTargetHz = config::GetAutoClockHz(HOCCLK_GLOBAL_PROFILE_TID, HocClkModule_Governor, clockManager::gContext.profile, true);
         }
@@ -96,7 +96,7 @@ namespace governor {
     u32 ResolveTargetHz(HocClkModule module) {
         u32 hz = clockManager::gContext.overrideFreqs[module];
         if (!hz)
-            hz = config::GetAutoClockHz(clockManager::gContext.applicationId, module, clockManager::gContext.profile, false);
+            hz = config::GetAutoClockHz(clockManager::ProfileTitleId(module), module, clockManager::gContext.profile, false);
         if (!hz)
             hz = config::GetAutoClockHz(HOCCLK_GLOBAL_PROFILE_TID, module, clockManager::gContext.profile, false);
         return hz;
